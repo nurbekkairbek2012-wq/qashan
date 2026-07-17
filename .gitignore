@@ -5,6 +5,10 @@
 *.key
 *.pem
 
+# Настоящие скриншоты рассрочек — это чьи-то долги.
+# Сгенерированный макет (installment-mockup.png) коммитится: в нём данных нет.
+frontend/test-fixtures/real-*
+
 # Зависимости
 node_modules/
 vendor/
