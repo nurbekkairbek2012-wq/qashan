@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Qaryz — тема (Tailwind v4, CSS-first).
+   Цвета и шрифты задаются здесь; в JSX используем классы (bg-paper, text-ink),
+   hex не хардкодим.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Поверхности и текст */
+  --color-ink: #12151c;
+  --color-ink-soft: #4b5563;
+  --color-muted: #8a8f98;
+  --color-paper: #f6f6f4;
+  --color-surface: #ffffff;
+  --color-line: #e4e4e0;
+
+  /* Бренд */
+  --color-brand: #0f6e64;
+  --color-brand-soft: #e6f2f0;
+
+  /* Шкала долговой нагрузки. Это не украшение, а смысл продукта:
+     зелёный → жёлтый → красный отражает рост риска ухода в минус.
+     Оттенки различимы и в градациях серого — на проекторе цвет врёт. */
+  --color-safe: #15795c;
+  --color-safe-soft: #e7f4ef;
+  --color-warn: #a86a06;
+  --color-warn-soft: #fdf3e2;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fdecea;
+
+  /* Системные шрифты: на защите со сцены внешний шрифт может не загрузиться.
+     Демо обязано работать без сети. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Суммы и графики платежей должны выравниваться по разрядам */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
