@@ -72,7 +72,7 @@ describe('buildSchedule — график платежей', () => {
   });
 
   it('выводит платёж сам, если он не задан', () => {
-    const { monthlyPayment, ...withoutPayment } = installment;
+    const { monthlyPayment: _omitted, ...withoutPayment } = installment;
     expect(scheduleTotal(buildSchedule(withoutPayment))).toBe(460000);
   });
 
@@ -235,6 +235,40 @@ describe('simulateCashFlow — когда уйдёшь в минус', () => {
     });
     expect(result.firstNegativeMonth).toBeNull();
     expect(result.peakBurden).toBeCloseTo(0.25, 2);
+  });
+
+  it('ДЕФИЦИТ vs БАЛАНС: это разные ответы, и путать их нельзя', () => {
+    // Платежи 65 000 при доходе 60 000 — структурный дефицит с первого же месяца.
+    // Но накопленный баланс уходит в минус НЕ сразу: первый месяц горизонта
+    // (июль) платежей ещё не содержит, рассрочки стартуют в августе, и за июль
+    // копится целый доход. Эта подушка маскирует дефицит на много месяцев.
+    //
+    // Поэтому ведущий ответ продукта — firstDeficitMonth: он от накоплений
+    // не зависит. Баланс без реальных накоплений человека — условное число.
+    const installments = [
+      makeInstallment(15000, 12, '2026-08-10'),
+      makeInstallment(20000, 12, '2026-08-15'),
+      makeInstallment(30000, 12, '2026-08-20'),
+    ];
+
+    const result = simulateCashFlow(profile, installments, {
+      startDate: start, // 1 августа
+      horizonMonths: 12,
+    });
+
+    expect(result.firstDeficitMonth).toBe('2026-08');
+    expect(result.months[0].net).toBe(-5000);
+  });
+
+  it('дефицита нет, пока платежи не начались', () => {
+    // Рассрочка стартует в октябре — в августе и сентябре дефицита нет
+    const result = simulateCashFlow(profile, [makeInstallment(70000, 6, '2026-10-10')], {
+      startDate: start,
+      horizonMonths: 12,
+    });
+
+    expect(result.months[0].net).toBe(60000);
+    expect(result.firstDeficitMonth).toBe('2026-10');
   });
 
   it('ГЛАВНОЕ: три рассрочки, каждая «безобидная» → находим месяц ухода в минус', () => {

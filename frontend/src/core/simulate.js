@@ -70,10 +70,26 @@ function groupPaymentsByMonth(installments) {
  * денег наступает РАНЬШЕ нашего прогноза, потому что человек ещё и ест.
  * Мы даём оптимистичную границу, и это честнее, чем выдумывать структуру трат.
  *
+ * ДВА РАЗНЫХ ОТВЕТА — не путать:
+ *
+ *   firstDeficitMonth  — первый месяц, где платежи перевесили доход (net < 0).
+ *                        Структурный перелом. От накоплений НЕ зависит.
+ *                        Это главный ответ продукта.
+ *
+ *   firstNegativeMonth — первый месяц, где кончились деньги (balance < 0).
+ *                        Зависит от startBalance, то есть от реальных накоплений
+ *                        человека. Если их не спросили — параметр равен нулю,
+ *                        и число получается условным.
+ *
+ * Осторожно с балансом: если платежи начинаются не в первый месяц горизонта,
+ * стартовый месяц копит доход целиком, и накопленный баланс выглядит
+ * оптимистичнее, чем есть. Поэтому ведущий ответ — дефицит, а не баланс.
+ *
  * @param {{monthlyIncome: number}} profile
  * @param {Array} installments
  * @param {{horizonMonths?: number, startDate?: Date, startBalance?: number}} [options]
- * @returns {{months: MonthState[], firstNegativeMonth: string|null, peakBurden: number}}
+ * @returns {{months: MonthState[], firstDeficitMonth: string|null,
+ *            firstNegativeMonth: string|null, peakBurden: number}}
  */
 export function simulateCashFlow(profile, installments, options = {}) {
   const { horizonMonths = 12, startDate = new Date(), startBalance = 0 } = options;
@@ -88,6 +104,7 @@ export function simulateCashFlow(profile, installments, options = {}) {
 
   const months = [];
   let balance = startBalance;
+  let firstDeficitMonth = null;
   let firstNegativeMonth = null;
   let peakBurden = 0;
 
@@ -103,12 +120,13 @@ export function simulateCashFlow(profile, installments, options = {}) {
     const burden = income > 0 ? due / income : due > 0 ? Infinity : 0;
 
     if (Number.isFinite(burden) && burden > peakBurden) peakBurden = burden;
+    if (net < 0 && firstDeficitMonth === null) firstDeficitMonth = key;
     if (balance < 0 && firstNegativeMonth === null) firstNegativeMonth = key;
 
     months.push({ key, due, income, net, balance, burden, level: burdenLevel(burden) });
   }
 
-  return { months, firstNegativeMonth, peakBurden };
+  return { months, firstDeficitMonth, firstNegativeMonth, peakBurden };
 }
 
 /**
