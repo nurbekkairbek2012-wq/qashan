@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Dashboard from './components/Dashboard.jsx';
 import InstallmentForm from './components/InstallmentForm.jsx';
 import InstallmentList from './components/InstallmentList.jsx';
+import WhatIfSimulator from './components/WhatIfSimulator.jsx';
 import { formatTenge } from './core/format.js';
 
 /**
@@ -83,6 +84,10 @@ export default function App() {
             </p>
           </div>
         )}
+
+        {/* Симулятор работает и без единой рассрочки: первая покупка тоже
+            может не потянуться, и узнать об этом лучше до неё. */}
+        {income > 0 && <WhatIfSimulator profile={{ monthlyIncome: income }} installments={installments} />}
 
         <section className="space-y-4">
           <h2 className="text-base font-medium text-ink">

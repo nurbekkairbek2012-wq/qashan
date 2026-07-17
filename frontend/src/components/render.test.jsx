@@ -4,6 +4,8 @@ import { renderToString } from 'react-dom/server';
 import App from '../App.jsx';
 import Dashboard from './Dashboard.jsx';
 import InstallmentList from './InstallmentList.jsx';
+import WhatIfSimulator from './WhatIfSimulator.jsx';
+import { verdictOf } from '../core/verdict.js';
 import { formatTenge } from '../core/format.js';
 
 /**
@@ -76,6 +78,55 @@ describe('Dashboard', () => {
       <Dashboard profile={profile} installments={[makeInstallment('a', 50000, 12)]} />
     );
     expect(html).toContain('не тянешь');
+  });
+});
+
+describe('WhatIfSimulator — вердикт до покупки', () => {
+  it('рендерится без падения, вердикта до ввода цены нет', () => {
+    const html = renderToString(<WhatIfSimulator profile={profile} installments={[]} />);
+    expect(html).toContain('Думаешь взять ещё одну');
+    expect(html).not.toContain('потянешь');
+  });
+
+  it('дефицита не будет → бери', () => {
+    const verdict = verdictOf({
+      before: { firstDeficitMonth: null },
+      after: { firstDeficitMonth: null },
+      monthsLost: null,
+    });
+    expect(verdict.tone).toBe('safe');
+    expect(verdict.title).toContain('потянешь');
+  });
+
+  it('ГЛАВНОЕ: дефицита не было — стал. Это перелом, а не сдвиг', () => {
+    const verdict = verdictOf({
+      before: { firstDeficitMonth: null },
+      after: { firstDeficitMonth: '2026-09' },
+      monthsLost: Infinity,
+    });
+    expect(verdict.tone).toBe('danger');
+    expect(verdict.title).toContain('сентябрь 2026');
+    expect(verdict.detail).toContain('до неё дефицита не было');
+  });
+
+  it('дефицит был → приблизился на N месяцев, со склонением', () => {
+    const verdict = verdictOf({
+      before: { firstDeficitMonth: '2027-01' },
+      after: { firstDeficitMonth: '2026-09' },
+      monthsLost: 4,
+    });
+    expect(verdict.tone).toBe('danger');
+    expect(verdict.title).toContain('4 месяца'); // не «4 месяцев»
+  });
+
+  it('дефицит был и не сдвинулся → не пугаем зря', () => {
+    const verdict = verdictOf({
+      before: { firstDeficitMonth: '2026-09' },
+      after: { firstDeficitMonth: '2026-09' },
+      monthsLost: 0,
+    });
+    expect(verdict.tone).toBe('warn');
+    expect(verdict.detail).toContain('не приближает');
   });
 });
 
