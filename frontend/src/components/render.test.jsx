@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToString } from 'react-dom/server';
 
 import App from '../App.jsx';
+import { AuthProvider } from '../context/AuthContext.jsx';
 import Dashboard from './Dashboard.jsx';
 import InstallmentList from './InstallmentList.jsx';
 import WhatIfSimulator from './WhatIfSimulator.jsx';
@@ -32,8 +33,14 @@ const makeInstallment = (id, monthly, term) => ({
 
 describe('App', () => {
   it('пустой экран рендерится без падения', () => {
-    // localStorage в node недоступен — loadState обязан это пережить
-    const html = renderToString(<App />);
+    // App читает useAuth — оборачиваем в провайдер. Без Supabase-ключей в
+    // node провайдер уходит в localStorage-режим, что нам и нужно проверить:
+    // приложение поднимается без базы.
+    const html = renderToString(
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    );
     expect(html).toContain('Qaryz');
     expect(html).toContain('Укажи доход');
   });

@@ -3,44 +3,68 @@ import Dashboard from './components/Dashboard.jsx';
 import InstallmentForm from './components/InstallmentForm.jsx';
 import InstallmentList from './components/InstallmentList.jsx';
 import WhatIfSimulator from './components/WhatIfSimulator.jsx';
+import AuthPanel from './components/AuthPanel.jsx';
+import ScreenshotUpload from './components/ScreenshotUpload.jsx';
+import { useAuth } from './context/AuthContext.jsx';
+import * as repo from './lib/repository.js';
 import { formatTenge } from './core/format.js';
 
 /**
  * Qaryz — оболочка приложения.
  *
- * Состояние пока локальное (localStorage), Supabase придёт следующим шагом.
- * Данных «для демо» в коде нет и не будет: всё, что видно на экране, ввёл
- * живой человек. Пустой экран при первом заходе — честнее, чем выдуманные
- * рассрочки выдуманного студента.
+ * Источник данных выбирает репозиторий: вошёл — Supabase, нет — localStorage.
+ * App этого не знает, вызывает repo.* и получает одну структуру. Поэтому вход
+ * остаётся необязательным: основная ценность (расчёты, симулятор) работает
+ * без аккаунта, а на защите демо не зависит от того, поднята ли база.
+ *
+ * Данных «для демо» в коде нет: всё на экране ввёл человек. Пустой первый
+ * экран честнее выдуманных рассрочек выдуманного студента.
  */
 
-const STORAGE_KEY = 'qaryz.state.v1';
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    // Битый localStorage не должен ронять приложение — просто начинаем с нуля
-    return null;
-  }
-}
-
 export default function App() {
-  const saved = loadState();
-  const [monthlyIncome, setMonthlyIncome] = useState(saved?.monthlyIncome ?? '');
-  const [installments, setInstallments] = useState(saved?.installments ?? []);
+  const { user, loading } = useAuth();
 
+  const [monthlyIncome, setMonthlyIncome] = useState('');
+  const [installments, setInstallments] = useState([]);
+  const [prefill, setPrefill] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  // При входе/выходе перечитываем из нужного источника. user в зависимостях:
+  // сменился аккаунт — сменились данные.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ monthlyIncome, installments }));
-  }, [monthlyIncome, installments]);
+    if (loading) return;
+    let alive = true;
+    repo.loadState(user).then((state) => {
+      if (!alive) return;
+      setMonthlyIncome(state.monthlyIncome);
+      setInstallments(state.installments);
+      setReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user, loading]);
 
   const income = Number(monthlyIncome) || 0;
   const canSimulate = income > 0 && installments.length > 0;
 
-  const addInstallment = (installment) => setInstallments((list) => [...list, installment]);
-  const removeInstallment = (id) =>
+  const currentState = { monthlyIncome, installments };
+
+  const handleIncome = (value) => {
+    setMonthlyIncome(value);
+    repo.saveIncome(user, value, { ...currentState, monthlyIncome: value });
+  };
+
+  const handleAdd = async (installment) => {
+    const saved = await repo.addInstallment(user, installment, currentState);
+    setInstallments((list) => [...list, saved]);
+    setPrefill(null);
+  };
+
+  const handleRemove = async (id) => {
+    await repo.removeInstallment(user, id, currentState);
     setInstallments((list) => list.filter((item) => item.id !== id));
+  };
 
   return (
     <div className="min-h-dvh">
@@ -55,6 +79,10 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-4xl space-y-8 px-6 py-10">
+        <section className="rounded-xl border border-line bg-surface p-4">
+          <AuthPanel />
+        </section>
+
         <section className="rounded-xl border border-line bg-surface p-5">
           <label className="block">
             <span className="text-sm font-medium text-ink">Твой доход в месяц, ₸</span>
@@ -63,7 +91,7 @@ export default function App() {
               type="number"
               min="0"
               value={monthlyIncome}
-              onChange={(event) => setMonthlyIncome(event.target.value)}
+              onChange={(event) => handleIncome(event.target.value)}
               placeholder="60000"
               className="tabular mt-1 w-full max-w-xs rounded-lg border border-line px-3 py-2 text-ink outline-none focus:border-brand"
             />
@@ -73,7 +101,7 @@ export default function App() {
           )}
         </section>
 
-        {canSimulate ? (
+        {ready && canSimulate ? (
           <Dashboard profile={{ monthlyIncome: income }} installments={installments} />
         ) : (
           <div className="rounded-2xl border border-dashed border-line p-8 text-center">
@@ -87,16 +115,22 @@ export default function App() {
 
         {/* Симулятор работает и без единой рассрочки: первая покупка тоже
             может не потянуться, и узнать об этом лучше до неё. */}
-        {income > 0 && <WhatIfSimulator profile={{ monthlyIncome: income }} installments={installments} />}
+        {income > 0 && (
+          <WhatIfSimulator profile={{ monthlyIncome: income }} installments={installments} />
+        )}
 
         <section className="space-y-4">
           <h2 className="text-base font-medium text-ink">
             Твои рассрочки{installments.length > 0 && ` · ${installments.length}`}
           </h2>
-          <InstallmentList installments={installments} onRemove={removeInstallment} />
+          <InstallmentList installments={installments} onRemove={handleRemove} />
         </section>
 
-        <InstallmentForm onAdd={addInstallment} />
+        {/* Распознавание скриншота: видно только вошедшим (Edge Function
+            пускает по токену). Заполняет форму ниже, а не сохраняет напрямую. */}
+        <ScreenshotUpload onParsed={(data) => setPrefill(data)} />
+
+        <InstallmentForm onAdd={handleAdd} prefill={prefill} />
       </main>
 
       <footer className="mx-auto max-w-4xl px-6 pb-10 text-xs text-muted">

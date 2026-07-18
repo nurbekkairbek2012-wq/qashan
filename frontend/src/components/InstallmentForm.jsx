@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { validateInstallment } from '../core/schedule.js';
 import { formatTenge } from '../core/format.js';
 
 /**
- * Ручной ввод рассрочки.
+ * Ввод рассрочки — вручную или из распознанного скриншота.
  *
- * Пока это единственный способ добавить данные — и это осознанно: реальные
- * цифры вводит живой человек. Распознавание скриншота придёт позже и будет
- * заполнять ровно эти же поля, а не отдельный путь.
+ * Распознавание не идёт в базу напрямую: оно предзаполняет ЭТУ форму, а человек
+ * проверяет и подтверждает. Один путь для ручного ввода и для скриншота —
+ * поэтому и точка проверки инварианта одна, и глазами человек видит одно и то же.
  *
  * Цена за наличные необязательна: студент её часто не знает. Без неё просто
  * не считаем ставку — подставлять допущение вместо данных нельзя.
@@ -37,9 +37,32 @@ function Field({ label, hint, children }) {
 const inputClass =
   'w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink outline-none focus:border-brand';
 
-export default function InstallmentForm({ onAdd }) {
+/** Число|null от нормализатора → строка для input. null и 0-как-отсутствие → ''. */
+function toField(value) {
+  return value == null ? '' : String(value);
+}
+
+export default function InstallmentForm({ onAdd, prefill }) {
   const [form, setForm] = useState(EMPTY);
   const [warning, setWarning] = useState(null);
+
+  // Пришёл распознанный скриншот — заполняем поля и подсвечиваем, что данные
+  // от модели и их надо проверить. Незаполненные моделью поля остаются пустыми,
+  // а не подставляются наугад.
+  useEffect(() => {
+    if (!prefill) return;
+    setForm({
+      merchant: prefill.merchant ?? '',
+      itemName: prefill.itemName ?? '',
+      priceInstallment: toField(prefill.priceInstallment),
+      priceCash: toField(prefill.priceCash),
+      downPayment: toField(prefill.downPayment),
+      termMonths: toField(prefill.termMonths) || '12',
+      monthlyPayment: toField(prefill.monthlyPayment),
+      firstDueDate: prefill.firstDueDate ?? new Date().toISOString().slice(0, 10),
+    });
+    setWarning(null);
+  }, [prefill]);
 
   const set = (key) => (event) => setForm({ ...form, [key]: event.target.value });
 
@@ -74,6 +97,16 @@ export default function InstallmentForm({ onAdd }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-line bg-surface p-5">
       <h2 className="text-base font-medium text-ink">Добавить рассрочку</h2>
+
+      {prefill && (
+        <p
+          className="rounded-lg px-3 py-2 text-xs"
+          style={{ color: 'var(--color-brand)', background: 'var(--color-brand-soft)' }}
+        >
+          Поля заполнены из скриншота. Проверь цифры перед добавлением — распознавание
+          может ошибиться.
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Магазин или банк">

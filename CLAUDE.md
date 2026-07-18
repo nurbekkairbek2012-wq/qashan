@@ -127,4 +127,34 @@ CustDev — задача пользователя, не Claude. **Интервь
 
 ## Команды
 
-_появятся после скаффолда_
+```
+frontend (из папки frontend/):
+  npm run dev      — dev-сервер (http://localhost:5173)
+  npm run build    — production-сборка в dist/
+  npm run preview  — предпросмотр собранной версии
+  npm run test     — vitest (ядро расчётов + нормализация + рендер)
+  npm run lint     — oxlint
+
+supabase:
+  npx supabase functions deploy parse-installment  — выложить Edge Function
+  миграции — через SQL Editor (supabase/migrations/0001_init.sql)
+```
+
+## Устройство кода (кратко)
+
+```
+frontend/src/
+  core/       — чистые функции без React, всё под тестами:
+    dates, schedule, irr, simulate, format, normalize, verdict
+  lib/        — supabase (клиент), repository (localStorage ⇄ Supabase)
+  context/    — AuthContext (вход необязателен)
+  components/ — Dashboard, CashflowChart, WhatIfSimulator,
+                InstallmentForm/List, AuthPanel, ScreenshotUpload
+supabase/
+  migrations/ — схема + RLS
+  functions/  — parse-installment (vision на Gemini)
+```
+
+Принцип: расчёты и симулятор работают без входа (localStorage). Вход нужен
+для синхронизации и парсинга скриншотов. Источник данных прячет repository —
+App не ветвится на «есть база или нет».
