@@ -6,6 +6,9 @@
 Направление: **Digital Economy & Future Tech** · Проблемная зона: **11 — Финансовые технологии**
 
 > ⚠️ Проект в активной разработке (17–21 июля 2026). README обновляется по ходу.
+>
+> Репозиторий называется `qashan` (қашан — «когда»): банк показывает *сколько*
+> ты должен, Qaryz отвечает — *когда* не потянешь.
 
 ---
 
@@ -75,15 +78,27 @@ Qaryz отвечает на два вопроса:
 Боль от этого не зависит: невидимая совокупная нагрузка существует при любой ставке,
 хоть при нулевой.
 
+## Что работает
+
+- **Ввод рассрочек** — вручную или загрузкой скриншота (распознаётся автоматически).
+- **Дашборд** — месяц, в котором платежи перевесят доход; помесячный график; нагрузка.
+- **Симулятор «а что если»** — вводишь цену будущей покупки и видишь, на сколько
+  приближается уход в минус. До покупки, а не после.
+- **Реальная ставка** по каждой рассрочке через IRR (где известна цена за наличные).
+- **Вход необязателен**: расчёты работают на localStorage без аккаунта. Вход нужен
+  для синхронизации между устройствами и разбора скриншотов.
+
 ## Локальный запуск
 
 Требуется Node.js 20+ (разрабатывалось на 22).
 
 ```bash
-git clone https://github.com/nurbekkairbek2012-wq/<repo>.git
-cd <repo>/frontend
+git clone https://github.com/nurbekkairbek2012-wq/qashan.git
+cd qashan/frontend
+cp .env.example .env      # вписать свои ключи Supabase (или оставить пустым —
+                          # приложение поднимется в localStorage-режиме)
 npm install
-npm run dev          # http://localhost:5173
+npm run dev               # http://localhost:5173
 ```
 
 Команды:
@@ -92,21 +107,59 @@ npm run dev          # http://localhost:5173
 npm run dev       # dev-сервер
 npm run build     # production-сборка в dist/
 npm run preview   # предпросмотр сборки
-npm run lint      # ESLint
+npm run test      # vitest — ядро расчётов, нормализация, рендер (67 тестов)
+npm run lint      # oxlint
 ```
 
-Переменные окружения — см. `frontend/.env.example` (появится вместе с подключением Supabase).
-Ключи в репозиторий не коммитятся.
+Переменные окружения — см. `frontend/.env.example`. Ключи в репозиторий не
+коммитятся; `anon key` не секретный (его закрывает RLS), ключ Gemini живёт
+в секретах Supabase на сервере.
+
+### Supabase (опционально — без него работает localStorage)
+
+```bash
+# схема + RLS: Supabase Dashboard → SQL Editor → выполнить
+supabase/migrations/0001_init.sql
+
+# распознавание скриншотов:
+npx supabase functions deploy parse-installment
+# секрет GEMINI_API_KEY задаётся в Dashboard → Edge Functions → Secrets
+```
+
+## Стек
+
+React + Vite + Tailwind · Supabase (PostgreSQL + RLS + Auth) ·
+Supabase Edge Functions (Deno) · Gemini vision для распознавания скриншотов.
 
 ## Структура
 
 ```
-/frontend      — React + Vite + Tailwind
-  src/
-/docs
-  ARCHITECTURE.md   — схема данных, модель расчёта, обоснования
-/supabase      — миграции, RLS, Edge Functions (появится)
+frontend/src/
+  core/       — чистые функции без React, всё под тестами:
+                dates · schedule · irr · simulate · normalize · verdict · format
+  lib/        — supabase (клиент) · repository (localStorage ⇄ Supabase)
+  context/    — AuthContext (вход необязателен)
+  components/ — Dashboard · CashflowChart · WhatIfSimulator ·
+                InstallmentForm/List · AuthPanel · ScreenshotUpload
+docs/
+  ARCHITECTURE.md    — схема данных, модель расчёта, проверка RLS, обоснования
+  CUSTDEV.md         — методичка интервью
+  PRICE_RESEARCH.md  — как проверяется гипотеза о наценке
+supabase/
+  migrations/  — схема + RLS
+  functions/   — parse-installment (Gemini vision)
 ```
+
+## Роль ИИ
+
+**LLM извлекает — код считает.** Модель распознаёт скриншот и отдаёт черновые
+*строки*. Числа, даты и вся арифметика (график, IRR, симуляция) — детерминированный
+код, покрытый тестами. Языковой модели деньги считать не даём: она ошибается
+в арифметике.
+
+Цепочка: скриншот → Edge Function (Gemini) → сырые строки → `normalize.js`
+(числа/даты) → валидация инварианта `платёж × срок ≈ сумма` → предзаполнение
+формы. Расхождение не проглатывается — показывается человеку.
 
 ## Команда
 
