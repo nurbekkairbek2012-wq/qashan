@@ -8,6 +8,7 @@ import ScreenshotUpload from './components/ScreenshotUpload.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import * as repo from './lib/repository.js';
 import { formatTenge } from './core/format.js';
+import { DEMO_INCOME, makeDemoInstallments } from './core/demoData.js';
 
 /**
  * Qaryz — оболочка приложения.
@@ -66,6 +67,32 @@ export default function App() {
     setInstallments((list) => list.filter((item) => item.id !== id));
   };
 
+  // Заполнить примером — для живого демо и записи видео, чтобы не вводить
+  // цифры руками. Данные помечены как пример в самих названиях магазинов
+  // и в подписи, никто не примет их за реальные.
+  const handleLoadDemo = async () => {
+    const demo = makeDemoInstallments();
+    setMonthlyIncome(DEMO_INCOME);
+    setInstallments(demo);
+    // Сохраняем через репозиторий, чтобы пример вёл себя как настоящие данные
+    // (в т.ч. синхронизировался, если пользователь вошёл).
+    repo.saveIncome(user, DEMO_INCOME, { monthlyIncome: DEMO_INCOME, installments: demo });
+    for (const item of demo) {
+      await repo.addInstallment(user, item, { monthlyIncome: DEMO_INCOME, installments: demo });
+    }
+  };
+
+  const handleClear = async () => {
+    for (const item of installments) {
+      await repo.removeInstallment(user, item.id, currentState);
+    }
+    setInstallments([]);
+    setMonthlyIncome('');
+    repo.saveIncome(user, '', { monthlyIncome: '', installments: [] });
+  };
+
+  const hasData = installments.length > 0 || income > 0;
+
   return (
     <div className="min-h-dvh">
       <header className="border-b border-line bg-surface">
@@ -74,7 +101,17 @@ export default function App() {
             <span className="text-lg font-semibold tracking-tight text-ink">Qaryz</span>
             <span className="text-sm text-muted">когда перестанет хватать</span>
           </div>
-          <span className="text-xs text-muted">Tech Vision 2026</span>
+          {hasData ? (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-xs text-muted hover:text-danger"
+            >
+              Очистить
+            </button>
+          ) : (
+            <span className="text-xs text-muted">Tech Vision 2026</span>
+          )}
         </div>
       </header>
 
@@ -110,6 +147,16 @@ export default function App() {
               Каждая рассрочка по отдельности выглядит подъёмной. Qaryz складывает
               их вместе и показывает месяц, в котором денег перестанет хватать.
             </p>
+            <button
+              type="button"
+              onClick={handleLoadDemo}
+              className="mt-4 rounded-lg border border-brand px-4 py-2 text-sm font-medium text-brand hover:bg-brand-soft"
+            >
+              Заполнить примером
+            </button>
+            <p className="mt-2 text-xs text-muted">
+              три «безобидные» рассрочки на демонстрационных данных
+            </p>
           </div>
         )}
 
@@ -129,6 +176,16 @@ export default function App() {
         {/* Распознавание скриншота: видно только вошедшим (Edge Function
             пускает по токену). Заполняет форму ниже, а не сохраняет напрямую. */}
         <ScreenshotUpload onParsed={(data) => setPrefill(data)} />
+
+        {!hasData && (
+          <button
+            type="button"
+            onClick={handleLoadDemo}
+            className="text-sm font-medium text-brand hover:underline"
+          >
+            или заполнить примером для демонстрации →
+          </button>
+        )}
 
         <InstallmentForm onAdd={handleAdd} prefill={prefill} />
       </main>
