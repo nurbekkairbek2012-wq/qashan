@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Qaryz — бриф для команды</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --paper: #f4f2ec; --surface: #fff; --surface-2: #faf8f3;
+    --ink: #16191d; --ink-soft: #4c565d; --muted: #8a8f8a; --line: #e4e0d6;
+    --brand: #0f6e64; --brand-soft: #e2f0ed;
+    --safe: #15795c; --safe-soft: #e5f3ee;
+    --warn: #9a6300; --warn-soft: #f8efdc;
+    --danger: #b3261e; --danger-soft: #fbe9e7;
+    --shadow: 0 1px 2px rgba(20,25,29,.04), 0 4px 16px rgba(20,25,29,.05);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14171a; --surface: #1b1f23; --surface-2: #20252a;
+      --ink: #f0eee8; --ink-soft: #aab2b6; --muted: #7f867f; --line: #2c3237;
+      --brand: #56cfbf; --brand-soft: #143a37;
+      --safe: #4cc79f; --safe-soft: #123a30; --warn: #e0a53d; --warn-soft: #3a2e12;
+      --danger: #ec6a60; --danger-soft: #3a1c1a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 24px 96px; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  header.masthead { padding: 56px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 44px; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--brand); font-weight: 600; margin: 0 0 14px; }
+  h1.title { font-size: clamp(36px, 6.5vw, 54px); line-height: 1.03; letter-spacing: -.02em; margin: 0; font-weight: 700; }
+  h1.title .sub { display: block; color: var(--brand); font-size: .42em; font-weight: 600; margin-top: 12px; }
+  .lede { font-size: clamp(16px, 2.3vw, 19px); color: var(--ink-soft); max-width: 60ch; margin: 22px 0 0; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .chip { font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-soft); }
+  .chip strong { color: var(--ink); font-weight: 600; }
+  .print-hint { margin-top: 20px; font-size: 13px; color: var(--muted); }
+
+  section { margin: 0 0 48px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .sec-num { font-size: 13px; font-weight: 600; color: var(--brand); font-variant-numeric: tabular-nums; min-width: 24px; }
+  h2 { font-size: 22px; letter-spacing: -.01em; margin: 0; font-weight: 650; }
+  h3 { font-size: 16px; margin: 22px 0 8px; font-weight: 650; }
+  p { margin: 0 0 13px; }
+  .soft { color: var(--ink-soft); }
+  .lead-quote { border-left: 3px solid var(--brand); padding: 4px 0 4px 18px; margin: 16px 0; font-size: 18px; font-weight: 500; }
+
+  .cards { display: grid; gap: 14px; }
+  @media (min-width: 640px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+  .card .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); font-weight: 600; margin: 0 0 8px; }
+  .card p { font-size: 14px; margin: 0; color: var(--ink-soft); }
+  .card strong { color: var(--ink); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
+  .panel.brand { background: var(--brand-soft); border-color: transparent; }
+  .big-idea { font-size: 20px; font-weight: 650; margin: 0 0 12px; }
+  .flow { font-family: var(--mono); font-size: 13px; line-height: 1.8; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 16px 0 0; overflow-x: auto; white-space: pre; color: var(--ink-soft); }
+
+  .callout { border-radius: 14px; padding: 18px 20px; margin: 8px 0; background: var(--warn-soft); }
+  .callout.brand { background: var(--brand-soft); }
+  .callout .tag { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); margin: 0 0 8px; }
+  .callout.brand .tag { color: var(--brand); }
+  .callout p { margin: 0 0 10px; font-size: 15px; }
+  .callout p:last-child { margin: 0; }
+
+  ul.done { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  ul.done li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; }
+  .tick { flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--safe-soft); color: var(--safe); display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 1px; }
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td .who { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); }
+  td .who.team { background: var(--danger-soft); color: var(--danger); }
+  .when { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .tl-row { display: grid; grid-template-columns: 72px 1fr; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+  .tl-row:last-child { border-bottom: none; }
+  .tl-time { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--brand); font-size: 14px; }
+  .tl-screen { font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+  .tl-say { font-size: 15px; margin: 0; }
+  .tl-say::before { content: "«"; color: var(--muted); }
+  .tl-say::after { content: "»"; color: var(--muted); }
+
+  /* CustDev вопросы */
+  .qblock { margin: 0 0 22px; }
+  .qblock h3 { display: flex; align-items: baseline; gap: 10px; }
+  .qblock h3 .bn { font-size: 12px; font-weight: 700; color: #fff; background: var(--brand); border-radius: 6px; padding: 2px 8px; }
+  ol.q { margin: 8px 0 0; padding-left: 22px; }
+  ol.q li { margin: 0 0 9px; font-size: 15px; }
+  ol.q li .note { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 12px 0; }
+  .vs > div { padding: 14px 16px; font-size: 14px; }
+  .vs .bad { background: var(--danger-soft); }
+  .vs .good { background: var(--safe-soft); border-left: 1px solid var(--line); }
+  .vs .h { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 8px; }
+  .vs .bad .h { color: var(--danger); }
+  .vs .good .h { color: var(--safe); }
+
+  .crit-item { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; margin: 0 0 12px; }
+  .crit-n { font-weight: 700; color: var(--brand); }
+  .crit-item p { margin: 0; font-size: 15px; }
+
+  footer { margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  code.repo { font-family: var(--mono); font-size: 13px; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-soft); }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .card, .panel, header.masthead { box-shadow: none; }
+    section, .qblock, .tl-row { break-inside: avoid; }
+    .print-hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Бриф для команды · Tech Vision 2026</p>
+    <h1 class="title">Qaryz<span class="sub">когда ты уйдёшь в минус по рассрочкам</span></h1>
+    <p class="lede">Всё для презентации, видео и защиты: проблема, решение, стек, вопросы для интервью и покадровый сценарий. Без кода.</p>
+    <div class="meta">
+      <span class="chip">Направление: <strong>Digital Economy &amp; Future Tech</strong></span>
+      <span class="chip">Зона: <strong>11 — Финтех</strong></span>
+      <span class="chip">Дедлайн: <strong>21 июля, 23:59</strong></span>
+    </div>
+    <p class="print-hint">💡 Чтобы сохранить в PDF: Ctrl+P (⌘P на Mac) → «Сохранить как PDF».</p>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>Проблема</h2></div>
+    <p><strong>Кто:</strong> студент 17–20 лет с первым доходом — стипендия или подработка.</p>
+    <p><strong>Боль:</strong> берёт рассрочку «0-0-4». Потом вторую в другом магазине. Потом третью. Каждая по отдельности выглядит безобидно — «всего 15 000 в месяц». Но совокупной картины не видит никто: каждая рассрочка живёт в своём приложении. В какой-то месяц платежи молча съедают весь доход.</p>
+    <p class="lead-quote">Банк показывает, сколько ты должен. Никто не показывает, когда ты не потянешь.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Решение</h2></div>
+    <div class="cards">
+      <div class="card"><p class="k">Дашборд</p><p>Вводишь доход и рассрочки — видишь <strong>месяц, где платежи перевесят доход</strong>. График по месяцам: синее — плюс, красное — минус.</p></div>
+      <div class="card"><p class="k">Симулятор «что если»</p><p>Вводишь цену будущей покупки <strong>прямо в магазине</strong> и видишь, на сколько приближается уход в минус. До покупки, а не после.</p></div>
+      <div class="card"><p class="k">Реальная ставка</p><p>По каждой рассрочке считаем <strong>настоящий процент годовых</strong> — там, где известна цена за наличные.</p></div>
+    </div>
+    <p class="soft" style="margin-top:16px">Данные вводятся вручную <strong>или</strong> загрузкой скриншота экрана рассрочки — он распознаётся автоматически.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Аудитория</h2></div>
+    <p>Студенты и молодёжь 17–20 лет с первым доходом. По данным направления: 68% молодёжи 18–29 способны делать сбережения, но культура рассрочек массовая; в городах банковскими приложениями пользуются 72%, в сёлах — 32%. Масштаб можно подкрепить цифрами с <strong>stat.gov.kz</strong>.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Стек и архитектура</h2></div>
+    <div class="table-scroll"><table>
+      <tr><th>Слой</th><th>Технология</th></tr>
+      <tr><td>Фронтенд</td><td>React + Vite + Tailwind</td></tr>
+      <tr><td>База, вход, хранение</td><td>Supabase (PostgreSQL + RLS)</td></tr>
+      <tr><td>Серверная логика</td><td>Supabase Edge Functions (Deno)</td></tr>
+      <tr><td>Распознавание скриншотов</td><td>Gemini vision</td></tr>
+    </table></div>
+    <div class="flow">телефон / браузер  →  Supabase (база + вход)
+                   →  Edge Function (сервер) → Gemini (читает скриншот)</div>
+    <p class="soft" style="margin-top:14px">Ключи распознавания живут на сервере, не в браузере — это про безопасность.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>Главная инженерная идея</h2></div>
+    <div class="panel brand">
+      <p class="big-idea">LLM извлекает — код считает.</p>
+      <p class="soft" style="margin:0">Модель (Gemini) только <strong>распознаёт</strong> скриншот и отдаёт текст, как он написан на экране. Все деньги — график, процент, прогноз ухода в минус — считает наш код, покрытый 67 тестами.</p>
+    </div>
+    <p style="margin-top:16px">Ответ на вопрос жюри «а у вас не просто обёртка над ChatGPT?». Нет: обёртка отдала бы что вернула модель, а наш код её проверяет и, если цифры не сходятся, показывает это человеку. Ставку считаем методом <strong>IRR</strong> — свой численный алгоритм, не готовая библиотека.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Честный момент — для Q&amp;A</h2></div>
+    <div class="callout">
+      <p class="tag">Непроверенная гипотеза</p>
+      <p>Гипотеза: в рассрочке «0-0-4» спрятана наценка (товар в рассрочку дороже, чем за наличные). Мы её <strong>пока не подтвердили</strong> и не выдаём за факт — в Kaspi Red комиссию платит продавец.</p>
+      <p>Если член жюри скажет «там нет наценки»: «Верно, поэтому мы это и проверяем данными, а не заявляем. Наш продукт про совокупную нагрузку, а она невидима при любой ставке — хоть при нулевой».</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>Что уже готово</h2></div>
+    <ul class="done">
+      <li><span class="tick">✓</span><span>Ядро расчётов: график, IRR, симуляция — <strong>67 тестов</strong></span></li>
+      <li><span class="tick">✓</span><span>Дашборд + график + симулятор «а что если»</span></li>
+      <li><span class="tick">✓</span><span>База с защитой — RLS проверен попыткой взлома, не на словах</span></li>
+      <li><span class="tick">✓</span><span>Вход / регистрация, распознавание скриншотов end-to-end</span></li>
+      <li><span class="tick">✓</span><span>Публичный репозиторий с ежедневными коммитами</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><h2>Что осталось до 21 июля</h2></div>
+    <div class="table-scroll"><table>
+      <tr><th>Задача</th><th>Кто</th><th>Когда</th></tr>
+      <tr><td><strong>CustDev-интервью</strong> — 2–3 живых разговора</td><td><span class="who team">вся команда</span></td><td class="when">до 19 июля</td></tr>
+      <tr><td>10–20 реальных пар цен вручную</td><td><span class="who">кто сможет</span></td><td class="when">до 19 июля</td></tr>
+      <tr><td>Выложить сайт (live-ссылка)</td><td><span class="who">Нурбек</span></td><td class="when">20 июля</td></tr>
+      <tr><td><strong>Презентация</strong> (до 12 слайдов)</td><td><span class="who team">вы</span></td><td class="when">20–21 июля</td></tr>
+      <tr><td><strong>Видео-демо</strong> (до 3 минут)</td><td><span class="who team">вы</span></td><td class="when">20–21 июля</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">09</span><h2>Вопросы для CustDev</h2></div>
+    <div class="callout brand">
+      <p class="tag">Главное правило</p>
+      <p><strong>Спрашивай про прошлое поведение, а не про мнение о будущем.</strong> Люди врут о том, что «было бы полезно», но не о том, что уже делали.</p>
+    </div>
+    <div class="vs">
+      <div class="bad"><p class="h">✗ Не спрашивать</p>«Тебе было бы полезно приложение, которое показывает все рассрочки?» → вежливое «да» и ноль информации.</div>
+      <div class="good"><p class="h">✓ Спрашивать</p>«Покажи прямо сейчас, как ты смотришь, сколько платишь в этом месяце» → смотришь на руки, получаешь факты.</div>
+    </div>
+
+    <div class="qblock">
+      <h3><span class="bn">Блок&nbsp;1</span> Что есть сейчас (факты)</h3>
+      <ol class="q">
+        <li>Сколько у тебя сейчас рассрочек? По каждой: что купил, где, на сколько месяцев, сколько в месяц.</li>
+        <li>Какой доход в месяц и откуда — стипендия, подработка, родители?</li>
+        <li>Сколько всего уходит на платежи? <span class="note">Дай посчитать самому. Засеки, сколько времени займёт и полезет ли в приложения — это наблюдение, а не ответ.</span></li>
+      </ol>
+    </div>
+    <div class="qblock">
+      <h3><span class="bn">Блок&nbsp;2</span> Как это случилось</h3>
+      <ol class="q" start="4">
+        <li>Расскажи про последнюю рассрочку. Как решил взять? Сколько думал?</li>
+        <li>Когда брал вторую — помнил, сколько платишь по первой? Считал сумму?</li>
+        <li>Где смотришь общую картину? <strong>Покажи прямо сейчас.</strong> <span class="note">Ключевой вопрос. Смотри на руки, а не на слова.</span></li>
+      </ol>
+    </div>
+    <div class="qblock">
+      <h3><span class="bn">Блок&nbsp;3</span> Был ли реальный ущерб</h3>
+      <ol class="q" start="7">
+        <li>Был месяц, когда на платёж не хватило? Что произошло? Что сделал?</li>
+        <li>Что было хуже всего — просрочка, штраф, занял, родители узнали?</li>
+        <li>Отказывался от покупки, поняв что не потянешь? Как понял?</li>
+      </ol>
+    </div>
+    <div class="qblock">
+      <h3><span class="bn">Блок&nbsp;4</span> Проверка гипотезы о наценке</h3>
+      <ol class="q" start="10">
+        <li>Сравнивал цену в рассрочку с ценой за наличные? Отличалась?</li>
+        <li>Знаешь, сколько всего переплатишь? Откуда узнал / почему не знаешь?</li>
+        <li>Тебе показывали процент? Или сказали «беспроцентная»?</li>
+      </ol>
+    </div>
+    <div class="qblock">
+      <h3><span class="bn">Блок&nbsp;5</span> Что уже пробовал</h3>
+      <ol class="q" start="13">
+        <li>Что пробовал, чтобы держать под контролем — заметки, Excel, приложение?</li>
+        <li>Почему бросил? <span class="note">Самый ценный вопрос: здесь причина, по которой наш продукт тоже могут бросить.</span></li>
+      </ol>
+    </div>
+    <div class="callout">
+      <p class="tag">Согласие на данные</p>
+      <p>Перед записью цифр: «Можно запишу суммы по твоим рассрочкам? Пойдут в учебный проект, без имени и без номеров карт». В демо и видео — никаких имён и реальных номеров. Если у собеседника есть рассрочка — попроси скриншот (суммы на видео замажем).</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">10</span><h2>Сценарий видео — 3 минуты</h2></div>
+    <div class="tl-row"><div class="tl-time">0:00</div><div><p class="tl-screen">Титул / заставка</p><p class="tl-say">Студент берёт рассрочку. Потом вторую, потом третью. Каждая — всего 15 тысяч в месяц. Но сумму не показывает никто.</p></div></div>
+    <div class="tl-row"><div class="tl-time">0:25</div><div><p class="tl-screen">Открыт Qaryz, пустой экран</p><p class="tl-say">Qaryz отвечает на вопрос, который не задаёт ни один банк: когда именно ты перестанешь тянуть.</p></div></div>
+    <div class="tl-row"><div class="tl-time">0:40</div><div><p class="tl-screen">Доход 60 000 → 3 рассрочки (или «Показать на примере»)</p><p class="tl-say">15, 20, 30 в месяц — по отдельности каждая нормальная. А вместе 65 тысяч при доходе 60. Приложение показывает месяц, где ты уходишь в минус.</p></div></div>
+    <div class="tl-row"><div class="tl-time">1:30</div><div><p class="tl-screen">Симулятор «а что если» — вводишь цену</p><p class="tl-say">Ты в магазине, хочешь ещё одну. Вводишь цену до покупки — и видишь, что месяц перелома сдвигается ближе. Ответ до того, как подписал.</p></div></div>
+    <div class="tl-row"><div class="tl-time">2:10</div><div><p class="tl-screen">Загрузка скриншота → поля заполнились</p><p class="tl-say">Вводить руками не обязательно — грузишь скриншот, поля заполняются сами. Но считает не нейросеть: она только распознаёт, математику делает наш код.</p></div></div>
+    <div class="tl-row"><div class="tl-time">2:35</div><div><p class="tl-screen">Список рассрочек со ставками / финал</p><p class="tl-say">Где известна цена за наличные — показываем реальную ставку. Где нет — честно пишем «нет данных», а не выдумываем. Видишь стену до того, как в неё врежешься.</p></div></div>
+
+    <h3>Показать обязательно</h3>
+    <ul class="done">
+      <li><span class="tick">✓</span><span>Дашборд с месяцем ухода в минус — ядро продукта</span></li>
+      <li><span class="tick">✓</span><span>Симулятор «а что если» — фишка, которой нет у банков</span></li>
+      <li><span class="tick">✓</span><span>Загрузка скриншота — ИИ-часть</span></li>
+      <li><span class="tick">✓</span><span>Момент, где ставка не считается («нет данных») — доказывает честность</span></li>
+    </ul>
+    <div class="callout" style="margin-top:16px">
+      <p class="tag">Не говорить в кадре</p>
+      <p>«В рассрочке зашита наценка» — как факт (это гипотеза). «Работает с любым скриншотом Kaspi» — распознавание проверено на нашем макете.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">11</span><h2>Для презентации — под критерии</h2></div>
+    <div class="crit-item"><span class="crit-n">1</span><p><strong>Исследование + CustDev.</strong> Живые разговоры, реальные цитаты людей.</p></div>
+    <div class="crit-item"><span class="crit-n">2</span><p><strong>Инженерка.</strong> «LLM извлекает, код считает» + свой IRR-алгоритм + RLS проверяли взломом. Не обёртка над API.</p></div>
+    <div class="crit-item"><span class="crit-n">3</span><p><strong>История коммитов.</strong> Коммиты каждый день с 17-го. Скриншот истории на GitHub доказывает: делали в дни хакатона.</p></div>
+  </section>
+
+  <footer>
+    Репозиторий: <code class="repo">github.com/nurbekkairbek2012-wq/qashan</code><br>
+    Полная техдокументация — папка <code class="repo">docs/</code>. Вопросы по коду и демо — к Нурбеку.
+  </footer>
+</div>
+</body>
+</html>
