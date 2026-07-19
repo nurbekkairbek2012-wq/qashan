@@ -100,7 +100,7 @@ describe('WhatIfSimulator — вердикт до покупки', () => {
     const verdict = verdictOf({
       before: { firstDeficitMonth: null },
       after: { firstDeficitMonth: null },
-      monthsLost: null,
+      deficitMonthsEarlier: null,
     });
     expect(verdict.tone).toBe('safe');
     expect(verdict.title).toContain('потянешь');
@@ -110,7 +110,7 @@ describe('WhatIfSimulator — вердикт до покупки', () => {
     const verdict = verdictOf({
       before: { firstDeficitMonth: null },
       after: { firstDeficitMonth: '2026-09' },
-      monthsLost: Infinity,
+      deficitMonthsEarlier: Infinity,
     });
     expect(verdict.tone).toBe('danger');
     expect(verdict.title).toContain('сентябрь 2026');
@@ -121,17 +121,33 @@ describe('WhatIfSimulator — вердикт до покупки', () => {
     const verdict = verdictOf({
       before: { firstDeficitMonth: '2027-01' },
       after: { firstDeficitMonth: '2026-09' },
-      monthsLost: 4,
+      deficitMonthsEarlier: 4,
     });
     expect(verdict.tone).toBe('danger');
     expect(verdict.title).toContain('4 месяца'); // не «4 месяцев»
+  });
+
+  it('РЕГРЕССИЯ: на экран не выходит «Infinity месяцев»', () => {
+    // Было так: вердикт ветвился по дефициту, а число брал из истощения
+    // баланса. Дефицит не сдвинулся (обе даты равны), но баланс впервые ушёл
+    // в минус → разница = Infinity → пользователь видел
+    // «Дефицит придёт на Infinity месяцев раньше». Поймано на скриншоте
+    // живого прогона, а не тестом — поэтому тест появился здесь.
+    const verdict = verdictOf({
+      before: { firstDeficitMonth: '2026-08' },
+      after: { firstDeficitMonth: '2026-08' },
+      deficitMonthsEarlier: Infinity,
+    });
+
+    expect(verdict.title).not.toContain('Infinity');
+    expect(verdict.tone).toBe('warn'); // дефицит и так наступит
   });
 
   it('дефицит был и не сдвинулся → не пугаем зря', () => {
     const verdict = verdictOf({
       before: { firstDeficitMonth: '2026-09' },
       after: { firstDeficitMonth: '2026-09' },
-      monthsLost: 0,
+      deficitMonthsEarlier: 0,
     });
     expect(verdict.tone).toBe('warn');
     expect(verdict.detail).toContain('не приближает');

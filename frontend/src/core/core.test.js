@@ -369,9 +369,9 @@ describe('simulateWithDraft — «а что если взять ещё одну�
       priceInstallment: 120000,
       monthlyPayment: 10000,
     };
-    const { after, monthsLost } = simulateWithDraft(profile, existing, draft, options);
+    const { after, depletionMonthsEarlier } = simulateWithDraft(profile, existing, draft, options);
     expect(after.firstNegativeMonth).toBeNull();
-    expect(monthsLost).toBeNull();
+    expect(depletionMonthsEarlier).toBeNull();
   });
 
   it('ГЛАВНОЕ: неподъёмная покупка → минуса не было, стал', () => {
@@ -383,7 +383,7 @@ describe('simulateWithDraft — «а что если взять ещё одну�
       monthlyPayment: 50000,
     };
 
-    const { before, after, monthsLost } = simulateWithDraft(profile, existing, draft, options);
+    const { before, after, depletionMonthsEarlier } = simulateWithDraft(profile, existing, draft, options);
 
     expect(before.firstNegativeMonth).toBeNull();
 
@@ -393,6 +393,6 @@ describe('simulateWithDraft — «а что если взять ещё одну�
     // Подушка не отменяет минус, а только отодвигает его.
     expect(after.months[5].balance).toBe(0); // 2027-01, подушка кончилась
     expect(after.firstNegativeMonth).toBe('2027-02');
-    expect(monthsLost).toBe(Infinity); // качественный скачок: минуса не было — стал
+    expect(depletionMonthsEarlier).toBe(Infinity); // качественный скачок: минуса не было — стал
   });
 });

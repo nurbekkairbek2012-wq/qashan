@@ -9,10 +9,14 @@
 import { formatMonth, plural } from './format.js';
 
 /**
- * @param {{before: Object, after: Object, monthsLost: number|null}} scenario
+ * ОДНА ВЕЛИЧИНА НА ВСЕ ВЕТКИ. И условия, и число здесь — про ДЕФИЦИТ
+ * (платежи перевесили доход). Мешать сюда истощение баланса нельзя: это
+ * другой вопрос с другим ответом, и на экран выходила бы бессмыслица.
+ *
+ * @param {{before: Object, after: Object, deficitMonthsEarlier: number|null}} scenario
  * @returns {{tone: 'safe'|'warn'|'danger', title: string, detail: string}}
  */
-export function verdictOf({ before, after, monthsLost }) {
+export function verdictOf({ before, after, deficitMonthsEarlier }) {
   // Дефицита не будет вовсе
   if (after.firstDeficitMonth === null) {
     return {
@@ -32,11 +36,14 @@ export function verdictOf({ before, after, monthsLost }) {
     };
   }
 
-  // Дефицит был и приблизился
-  if (monthsLost > 0) {
+  // Дефицит был и приблизился.
+  // Number.isFinite — страховка: в эту ветку Infinity уже не долетает (случай
+  // «дефицита не было» перехвачен выше), но выводить его пользователю нельзя
+  // ни при каких обстоятельствах, и молчаливая защита дешевле разбирательства.
+  if (Number.isFinite(deficitMonthsEarlier) && deficitMonthsEarlier > 0) {
     return {
       tone: 'danger',
-      title: `Дефицит придёт на ${monthsLost} ${plural(monthsLost, 'месяц', 'месяца', 'месяцев')} раньше`,
+      title: `Дефицит придёт на ${deficitMonthsEarlier} ${plural(deficitMonthsEarlier, 'месяц', 'месяца', 'месяцев')} раньше`,
       detail: `Было ${formatMonth(before.firstDeficitMonth)}, станет ${formatMonth(after.firstDeficitMonth)}.`,
     };
   }

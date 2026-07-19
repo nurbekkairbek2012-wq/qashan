@@ -138,8 +138,14 @@ export function simulateCashFlow(profile, installments, options = {}) {
  * @param {{monthlyIncome: number}} profile
  * @param {Array} installments существующие рассрочки
  * @param {Object} draft черновая рассрочка (в базу не попадает)
+ * ДВЕ РАЗНЫЕ РАЗНИЦЫ. Возвращаем обе, и названия это проговаривают. Их легко
+ * перепутать, и цена ошибки высока: однажды вердикт ветвился по дефициту, а
+ * число брал из истощения баланса — и на экран выходило «дефицит придёт на
+ * Infinity месяцев раньше». Отсюда явные имена вместо одного monthsLost.
+ *
  * @param {Object} [options] те же, что у simulateCashFlow
- * @returns {{before: Object, after: Object, monthsLost: number|null}}
+ * @returns {{before: Object, after: Object,
+ *            deficitMonthsEarlier: number|null, depletionMonthsEarlier: number|null}}
  */
 export function simulateWithDraft(profile, installments, draft, options = {}) {
   const before = simulateCashFlow(profile, installments, options);
@@ -148,9 +154,12 @@ export function simulateWithDraft(profile, installments, draft, options = {}) {
   return {
     before,
     after,
-    // На сколько месяцев приблизился уход в минус. null — если минус
-    // не наступает ни в одном из сценариев (либо наступал и до черновика).
-    monthsLost: monthsBetween(before.firstNegativeMonth, after.firstNegativeMonth),
+    // Насколько приблизился СТРУКТУРНЫЙ перелом (платежи > доход).
+    // От накоплений не зависит — на этом строится вердикт.
+    deficitMonthsEarlier: monthsBetween(before.firstDeficitMonth, after.firstDeficitMonth),
+    // Насколько приблизился момент, когда кончатся ДЕНЬГИ. Зависит от
+    // стартового баланса, поэтому число условно, пока мы его не спросили.
+    depletionMonthsEarlier: monthsBetween(before.firstNegativeMonth, after.firstNegativeMonth),
   };
 }
 
