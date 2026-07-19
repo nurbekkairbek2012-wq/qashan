@@ -26,19 +26,19 @@ function StatTile({ label, value, hint, level }) {
   const style = level ? LEVEL_STYLE[level] : null;
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
-      <div className="text-sm text-muted">{label}</div>
+    <div className="h-full rounded-2xl border border-line bg-surface p-4 shadow-card">
+      <div className="text-xs font-medium uppercase tracking-wide text-muted">{label}</div>
       <div
-        className="tabular mt-1 text-2xl font-semibold"
+        className="tabular mt-2 text-2xl font-bold tracking-tight"
         style={{ color: style?.color ?? 'var(--color-ink)' }}
       >
         {value}
       </div>
       {(hint || style) && (
-        <div className="mt-1 text-xs text-muted">
+        <div className="mt-1.5 text-xs text-muted">
           {style && (
             <span
-              className="mr-1.5 rounded px-1.5 py-0.5 font-medium"
+              className="mr-1.5 rounded-md px-1.5 py-0.5 font-semibold"
               style={{ color: style.color, background: style.bg }}
             >
               {style.label}
@@ -63,63 +63,76 @@ export default function Dashboard({ profile, installments }) {
   const level = burdenLevel(peakBurden);
 
   return (
-    <section className="space-y-6">
-      {/* ГЛАВНЫЙ ОТВЕТ. Крупно, словами, без графика — за ним и пришли. */}
-      <div
-        className="rounded-2xl border p-6"
-        style={{
-          borderColor: firstDeficitMonth ? 'var(--color-danger)' : 'var(--color-line)',
-          background: firstDeficitMonth ? 'var(--color-danger-soft)' : 'var(--color-safe-soft)',
-        }}
-      >
-        {firstDeficitMonth ? (
-          <>
-            <p className="text-sm font-medium text-ink-soft">Платежи перевесят доход в</p>
-            <p
-              className="mt-1 text-4xl font-semibold tracking-tight"
-              style={{ color: 'var(--color-danger)' }}
-            >
-              {formatMonth(firstDeficitMonth)}
-            </p>
-            <p className="mt-3 max-w-xl text-sm text-ink-soft">
-              В этом месяце на рассрочки уйдёт больше, чем ты получишь. Накопления
-              это отсрочат, но не отменят. И считаем мы только платежи — еда,
-              проезд и всё остальное сюда не входят, значит на деле будет тяжелее.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-medium text-ink-soft">На горизонте 12 месяцев</p>
-            <p
-              className="mt-1 text-4xl font-semibold tracking-tight"
-              style={{ color: 'var(--color-safe)' }}
-            >
-              Платежи по силам
-            </p>
-            <p className="mt-3 max-w-xl text-sm text-ink-soft">
-              Ни в одном месяце платежи не превышают доход. Но это расчёт только
-              по рассрочкам, без прочих расходов — запас меньше, чем кажется.
-            </p>
-          </>
-        )}
+    <section className="space-y-5">
+      {/* ГЛАВНЫЙ ОТВЕТ. Крупно, словами — за ним и пришли. Ключ ставим на
+          firstDeficitMonth, чтобы анимация проигрывалась заново, когда ответ
+          меняется (добавили рассрочку → месяц перелома сдвинулся). */}
+      {firstDeficitMonth ? (
+        <div
+          key={firstDeficitMonth}
+          className="animate-pop relative overflow-hidden rounded-3xl p-7 text-white shadow-card"
+          style={{
+            background:
+              'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-deep) 100%)',
+          }}
+        >
+          {/* Декоративное свечение в углу — глубина панели */}
+          <div
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.10)' }}
+          />
+          <p className="relative text-sm font-medium uppercase tracking-wide text-white/80">
+            Платежи перевесят доход в
+          </p>
+          <p className="relative mt-1 text-5xl font-bold leading-none tracking-tight sm:text-6xl">
+            {formatMonth(firstDeficitMonth)}
+          </p>
+          <p className="relative mt-4 max-w-xl text-sm leading-relaxed text-white/85">
+            В этом месяце на рассрочки уйдёт больше, чем ты получишь. Накопления
+            это отсрочат, но не отменят. Считаем только платежи — еда и проезд сюда
+            не входят, значит на деле будет тяжелее.
+          </p>
+        </div>
+      ) : (
+        <div
+          className="animate-pop rounded-3xl border p-7 shadow-card"
+          style={{ borderColor: 'transparent', background: 'var(--color-safe-soft)' }}
+        >
+          <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--color-safe)' }}>
+            На горизонте 12 месяцев
+          </p>
+          <p className="mt-1 text-4xl font-bold tracking-tight" style={{ color: 'var(--color-safe)' }}>
+            Платежи по силам
+          </p>
+          <p className="mt-3 max-w-xl text-sm text-ink-soft">
+            Ни в одном месяце платежи не превышают доход. Но это расчёт только
+            по рассрочкам, без прочих расходов — запас меньше, чем кажется.
+          </p>
+        </div>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="animate-rise delay-1">
+          <StatTile label="Доход в месяц" value={formatTenge(profile.monthlyIncome)} />
+        </div>
+        <div className="animate-rise delay-2">
+          <StatTile
+            label="Платежи в пиковый месяц"
+            value={formatTenge(peakMonth.due)}
+            hint={`по ${installments.length} рассрочкам`}
+          />
+        </div>
+        <div className="animate-rise delay-3">
+          <StatTile
+            label="Пиковая нагрузка"
+            value={formatPercent(peakBurden)}
+            level={level}
+            hint="доля дохода"
+          />
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatTile label="Доход в месяц" value={formatTenge(profile.monthlyIncome)} />
-        <StatTile
-          label="Платежи в пиковый месяц"
-          value={formatTenge(peakMonth.due)}
-          hint={`по ${installments.length} рассрочкам`}
-        />
-        <StatTile
-          label="Пиковая нагрузка"
-          value={formatPercent(peakBurden)}
-          level={level}
-          hint="доля дохода"
-        />
-      </div>
-
-      <div className="rounded-xl border border-line bg-surface p-5">
+      <div className="animate-rise delay-3 rounded-2xl border border-line bg-surface p-5 shadow-card">
         <CashflowChart months={months} highlightMonth={firstDeficitMonth} />
       </div>
     </section>

@@ -89,6 +89,19 @@ export default function CashflowChart({ months, highlightMonth }) {
           role="img"
           aria-label="Столбцы: остаток после платежей по месяцам относительно нуля"
         >
+          {/* Зона опасности: всё, что ниже нуля, тонирована красным. Провал
+              столбца в эту область читается сразу, ещё до чтения подписей. */}
+          {zeroY < PAD.top + PLOT.height && (
+            <rect
+              x={PAD.left}
+              y={zeroY}
+              width={PLOT.width}
+              height={PAD.top + PLOT.height - zeroY}
+              fill="var(--color-neg)"
+              opacity="0.07"
+            />
+          )}
+
           {ticks.map((value) => (
             <g key={value}>
               <line

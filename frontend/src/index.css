@@ -6,17 +6,19 @@
    hex не хардкодим.
    --------------------------------------------------------------------------- */
 @theme {
-  /* Поверхности и текст */
-  --color-ink: #12151c;
+  /* Поверхности и текст. Фон уводим в тёплый графит-беж, а не плоский серый —
+     мелочь, но экран перестаёт выглядеть шаблонным. */
+  --color-ink: #14171f;
   --color-ink-soft: #4b5563;
   --color-muted: #8a8f98;
-  --color-paper: #f6f6f4;
+  --color-paper: #f1efe9;
   --color-surface: #ffffff;
-  --color-line: #e4e4e0;
+  --color-line: #e4e1d8;
 
   /* Бренд */
   --color-brand: #0f6e64;
-  --color-brand-soft: #e6f2f0;
+  --color-brand-deep: #0a4f48;
+  --color-brand-soft: #e2f0ed;
 
   /* Шкала долговой нагрузки. Это не украшение, а смысл продукта:
      зелёный → жёлтый → красный отражает рост риска ухода в минус.
@@ -26,7 +28,8 @@
   --color-warn: #a86a06;
   --color-warn-soft: #fdf3e2;
   --color-danger: #b3261e;
-  --color-danger-soft: #fdecea;
+  --color-danger-deep: #7f1b16;
+  --color-danger-soft: #fbe9e7;
 
   /* Расходящаяся пара для графика баланса: выше нуля / ниже нуля.
      НЕ зелёный–красный, хотя для денег он напрашивается. Проверено валидатором
@@ -37,8 +40,8 @@
   --color-neg: #e34948;
 
   /* Хром графика: сетка и оси должны отступать на второй план */
-  --color-grid: #e1e0d9;
-  --color-axis: #c3c2b7;
+  --color-grid: #e1ded5;
+  --color-axis: #c3c0b6;
 
   /* Системные шрифты: на защите со сцены внешний шрифт может не загрузиться.
      Демо обязано работать без сети. */
@@ -52,7 +55,12 @@ html {
 }
 
 body {
-  background: var(--color-paper);
+  /* Мягкое радиальное свечение в углах — глубина без картинок и без сети */
+  background:
+    radial-gradient(1100px 520px at 88% -8%, rgba(15, 110, 100, 0.06), transparent 60%),
+    radial-gradient(900px 480px at 0% 108%, rgba(179, 38, 30, 0.05), transparent 55%),
+    var(--color-paper);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.55;
@@ -62,4 +70,30 @@ body {
 /* Суммы и графики платежей должны выравниваться по разрядам */
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Мягкие появления. Уважают prefers-reduced-motion. --------------------- */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop {
+  0%   { opacity: 0; transform: scale(0.96); }
+  60%  { opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.animate-rise { animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.animate-pop  { animation: pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.delay-1 { animation-delay: 0.06s; }
+.delay-2 { animation-delay: 0.14s; }
+.delay-3 { animation-delay: 0.22s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise, .animate-pop { animation: none; }
+}
+
+/* Тонкая тень для карточек — приподнимает их над фоном без обводки */
+.shadow-card {
+  box-shadow: 0 1px 2px rgba(20, 23, 31, 0.04), 0 10px 30px -12px rgba(20, 23, 31, 0.12);
 }

@@ -95,17 +95,26 @@ export default function App() {
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-4xl items-baseline justify-between px-6 py-4">
-          <div className="flex items-baseline gap-3">
-            <span className="text-lg font-semibold tracking-tight text-ink">Qaryz</span>
-            <span className="text-sm text-muted">когда перестанет хватать</span>
+      <header className="sticky top-0 z-10 border-b border-line/70 bg-paper/80 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="grid h-8 w-8 place-items-center rounded-lg text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, var(--color-brand), var(--color-brand-deep))' }}
+              aria-hidden="true"
+            >
+              Q
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-bold tracking-tight text-ink">Qaryz</span>
+              <span className="hidden text-sm text-muted sm:inline">когда перестанет хватать</span>
+            </div>
           </div>
           {hasData ? (
             <button
               type="button"
               onClick={handleClear}
-              className="text-xs text-muted hover:text-danger"
+              className="rounded-lg px-2.5 py-1 text-xs text-muted transition-colors hover:text-danger"
             >
               Очистить
             </button>
@@ -141,22 +150,54 @@ export default function App() {
         {ready && canSimulate ? (
           <Dashboard profile={{ monthlyIncome: income }} installments={installments} />
         ) : (
-          <div className="rounded-2xl border border-dashed border-line p-8 text-center">
-            <p className="text-lg text-ink">Укажи доход и добавь рассрочки</p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted">
-              Каждая рассрочка по отдельности выглядит подъёмной. Qaryz складывает
-              их вместе и показывает месяц, в котором денег перестанет хватать.
-            </p>
-            <button
-              type="button"
-              onClick={handleLoadDemo}
-              className="mt-4 rounded-lg border border-brand px-4 py-2 text-sm font-medium text-brand hover:bg-brand-soft"
-            >
-              Заполнить примером
-            </button>
-            <p className="mt-2 text-xs text-muted">
-              три «безобидные» рассрочки на демонстрационных данных
-            </p>
+          <div className="animate-rise overflow-hidden rounded-3xl border border-line bg-surface shadow-card">
+            <div className="p-8 sm:p-10">
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+                Одна рассрочка · вторая · третья
+              </p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">
+                Каждая по отдельности — «всего 15 000 в месяц».
+                <br className="hidden sm:block" />
+                <span style={{ color: 'var(--color-danger)' }}> Вместе они съедают весь доход.</span>
+              </h2>
+              <p className="mt-4 max-w-xl text-base text-ink-soft">
+                Банк показывает, сколько ты должен. Никто не показывает,
+                <strong className="text-ink"> когда ты не потянешь</strong>. Qaryz
+                складывает все рассрочки и называет месяц, в котором денег перестанет
+                хватать.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleLoadDemo}
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-card transition-transform hover:-translate-y-0.5"
+                  style={{ background: 'linear-gradient(135deg, var(--color-brand), var(--color-brand-deep))' }}
+                >
+                  Показать на примере →
+                </button>
+                <span className="text-xs text-muted">
+                  три «безобидные» рассрочки на демо-данных
+                </span>
+              </div>
+            </div>
+            {/* Мини-иллюстрация: три растущих столбца платежей, переваливающих
+                за линию дохода — визуальный эквивалент боли. */}
+            <div className="flex items-end gap-2 border-t border-line bg-brand-soft/40 px-8 py-6 sm:px-10">
+              {[38, 55, 78, 96].map((h, i) => (
+                <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    className="w-full rounded-t-md"
+                    style={{
+                      height: `${h}px`,
+                      background:
+                        h > 80
+                          ? 'linear-gradient(var(--color-danger), var(--color-danger-deep))'
+                          : 'linear-gradient(var(--color-brand), var(--color-brand-deep))',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

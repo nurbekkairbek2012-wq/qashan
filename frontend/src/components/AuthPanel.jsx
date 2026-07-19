@@ -14,6 +14,7 @@ export default function AuthPanel() {
   const { user, isConfigured, signIn, signUp, signOut } = useAuth();
 
   const [mode, setMode] = useState('signin');
+  const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState(null);
@@ -32,7 +33,7 @@ export default function AuthPanel() {
 
   if (user) {
     return (
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center justify-between gap-3 text-sm">
         <span className="text-muted">{user.email}</span>
         <button
           type="button"
@@ -45,6 +46,43 @@ export default function AuthPanel() {
     );
   }
 
+  // Свёрнутое состояние: тонкая строка, чтобы форма входа не отодвигала
+  // главный экран вниз. Разворачивается по клику.
+  if (!open) {
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-muted">
+          Расчёты работают без входа. Вход — для синхронизации и разбора скриншотов.
+        </span>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand"
+        >
+          Войти
+        </button>
+      </div>
+    );
+  }
+
+  // Технические ошибки Supabase → человеческий текст. Иначе пользователь видит
+  // «Invalid login credentials» и не понимает, что делать.
+  const humanize = (raw) => {
+    const t = raw.toLowerCase();
+    if (t.includes('not confirmed')) {
+      return 'Почта не подтверждена. Проверь письмо со ссылкой (загляни в спам). ' +
+        'Расчёты работают и без входа.';
+    }
+    if (t.includes('invalid login')) {
+      return 'Неверная почта или пароль. Если только зарегистрировался — сначала ' +
+        'подтверди почту по ссылке из письма.';
+    }
+    if (t.includes('already registered')) return 'Такая почта уже зарегистрирована — войди.';
+    if (t.includes('invalid') && t.includes('email')) return 'Проверь формат почты.';
+    if (t.includes('password')) return 'Пароль должен быть не короче 6 символов.';
+    return raw;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setBusy(true);
@@ -56,10 +94,15 @@ export default function AuthPanel() {
     setBusy(false);
 
     if (error) {
-      setMessage({ type: 'error', text: error });
+      setMessage({ type: 'error', text: humanize(error) });
     } else if (mode === 'signup') {
-      // Supabase по умолчанию шлёт письмо-подтверждение
-      setMessage({ type: 'ok', text: 'Проверь почту — там ссылка для подтверждения.' });
+      // Если в проекте отключено подтверждение почты, signUp сразу создаёт
+      // сессию и onAuthStateChange нас впустит — сообщение не покажется.
+      // Если включено — просим подтвердить.
+      setMessage({
+        type: 'ok',
+        text: 'Готово. Если попросят подтверждение — проверь почту (и спам).',
+      });
     }
   };
 

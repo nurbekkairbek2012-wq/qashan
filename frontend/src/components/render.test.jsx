@@ -42,7 +42,8 @@ describe('App', () => {
       </AuthProvider>
     );
     expect(html).toContain('Qaryz');
-    expect(html).toContain('Укажи доход');
+    // Пустой экран — герой-питч с призывом показать пример
+    expect(html).toContain('Вместе они съедают весь доход');
   });
 });
 
