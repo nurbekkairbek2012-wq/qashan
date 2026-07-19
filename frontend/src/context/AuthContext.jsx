@@ -55,6 +55,18 @@ export function AuthProvider({ children }) {
       return { error: error?.message ?? null };
     },
 
+    async signInWithGoogle() {
+      if (!isSupabaseConfigured) return { error: 'База не подключена' };
+      // redirectTo — куда Google вернёт после входа. window.location.origin
+      // работает и на localhost, и на проде без правки кода. Этот URL должен
+      // быть в списке Redirect URLs в Supabase → Authentication → URL Config.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      return { error: error?.message ?? null };
+    },
+
     async signOut() {
       if (isSupabaseConfigured) await supabase.auth.signOut();
     },
