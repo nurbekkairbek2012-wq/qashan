@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { simulateWithDraft } from '../core/simulate.js';
 import { verdictOf } from '../core/verdict.js';
 import { formatTenge, formatMonthsCount } from '../core/format.js';
+import SavingsAlternative from './SavingsAlternative.jsx';
 
 /**
  * «А что если взять ещё одну» — ключевая фича продукта.
@@ -18,8 +19,14 @@ import { formatTenge, formatMonthsCount } from '../core/format.js';
 const inputClass =
   'w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink outline-none focus:border-brand';
 
-/** Черновая рассрочка из цены и срока. Первый платёж — через месяц. */
-function makeDraft(price, termMonths) {
+/**
+ * Черновая рассрочка из цены и срока. Первый платёж — через месяц.
+ *
+ * priceCash необязательна: у витрины человек её часто не знает. Если знает —
+ * включается расчёт переплаты и реальной ставки; если нет — null, и мы про
+ * ставку молчим, а не подставляем допущение.
+ */
+function makeDraft(price, termMonths, priceCash) {
   const firstDue = new Date();
   firstDue.setMonth(firstDue.getMonth() + 1);
 
@@ -28,7 +35,7 @@ function makeDraft(price, termMonths) {
     firstDueDate: firstDue.toISOString().slice(0, 10),
     termMonths,
     priceInstallment: price,
-    priceCash: null,
+    priceCash: priceCash > 0 ? priceCash : null,
     downPayment: 0,
     monthlyPayment: Math.round(price / termMonths),
   };
@@ -43,12 +50,14 @@ const TONE = {
 export default function WhatIfSimulator({ profile, installments }) {
   const [price, setPrice] = useState('');
   const [termMonths, setTermMonths] = useState('12');
+  const [priceCash, setPriceCash] = useState('');
 
   const priceNumber = Number(price) || 0;
   const term = Number(termMonths) || 0;
+  const cashNumber = Number(priceCash) || 0;
   const ready = priceNumber > 0 && term > 0;
 
-  const draft = ready ? makeDraft(priceNumber, term) : null;
+  const draft = ready ? makeDraft(priceNumber, term, cashNumber) : null;
   const scenario = draft ? simulateWithDraft(profile, installments, draft, { horizonMonths: 12 }) : null;
   const verdict = scenario ? verdictOf(scenario) : null;
 
@@ -81,6 +90,24 @@ export default function WhatIfSimulator({ profile, installments }) {
             value={termMonths}
             onChange={(event) => setTermMonths(event.target.value)}
             className={`${inputClass} tabular mt-1`}
+          />
+        </label>
+
+        {/* Необязательное поле. Без него всё работает, с ним включается
+            проверка главной гипотезы проекта — есть ли в «беспроцентной»
+            рассрочке наценка. Спрашиваем, но не требуем. */}
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-medium text-ink">Цена за наличные, ₸</span>
+          <span className="ml-1.5 text-xs text-muted">
+            если знаешь — посчитаем переплату и реальную ставку
+          </span>
+          <input
+            type="number"
+            min="0"
+            value={priceCash}
+            onChange={(event) => setPriceCash(event.target.value)}
+            placeholder="необязательно"
+            className={`${inputClass} tabular mt-1 sm:max-w-xs`}
           />
         </label>
       </div>
@@ -117,6 +144,10 @@ export default function WhatIfSimulator({ profile, installments }) {
           </dl>
         </div>
       )}
+
+      {/* Выход, а не только диагноз. Показываем всегда, когда есть черновик:
+          даже если рассрочка подъёмная, человек вправе увидеть её цену. */}
+      {draft && <SavingsAlternative draft={draft} />}
     </section>
   );
 }
