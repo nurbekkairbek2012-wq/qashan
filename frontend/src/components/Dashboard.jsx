@@ -1,6 +1,8 @@
 import { simulateCashFlow, burdenLevel } from '../core/simulate.js';
-import { formatTenge, formatMonth, formatPercent } from '../core/format.js';
+import { portfolioSummary } from '../core/portfolio.js';
+import { formatTenge, formatMonth, formatPercent, formatMonthsCount } from '../core/format.js';
 import CashflowChart from './CashflowChart.jsx';
+import DebtCompositionChart from './DebtCompositionChart.jsx';
 
 /**
  * Дашборд: главный ответ продукта + опора под него.
@@ -61,6 +63,8 @@ export default function Dashboard({ profile, installments }) {
   // если рассрочка начинается позже, и тогда плитка врала бы.
   const peakMonth = months.reduce((worst, m) => (m.due > worst.due ? m : worst), months[0]);
   const level = burdenLevel(peakBurden);
+
+  const summary = portfolioSummary(installments, profile);
 
   return (
     <section className="space-y-5">
@@ -132,9 +136,63 @@ export default function Dashboard({ profile, installments }) {
         </div>
       </div>
 
+      {/* СОВОКУПНАЯ КАРТИНА — то, чего не показывает ни одно банковское
+          приложение, потому что каждое видит только свою рассрочку.
+
+          Ведущая цифра здесь — долг, выраженный В МЕСЯЦАХ ДОХОДА. «287 000 ₸»
+          для человека абстрактно; «4,8 месяца твоего дохода целиком» — тот же
+          факт в единицах, которыми он живёт. */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="animate-rise delay-3">
+          <StatTile
+            label="Отдать осталось"
+            value={formatTenge(summary.totalRemaining)}
+            hint={
+              Number.isFinite(summary.incomeMonths)
+                ? `это ${formatMonthsCount(Math.round(summary.incomeMonths))} твоего дохода целиком`
+                : undefined
+            }
+          />
+        </div>
+        <div className="animate-rise delay-3">
+          <StatTile
+            label="Свободен от рассрочек"
+            value={summary.lastPaymentMonth ? formatMonth(summary.lastPaymentMonth) : '—'}
+            hint="месяц последнего платежа"
+          />
+        </div>
+        <div className="animate-rise delay-3">
+          {/* Переплату показываем ТОЛЬКО там, где известна цена за наличные.
+              Где неизвестна — не пишем ноль (это читалось бы как «наценки нет»),
+              а прямо говорим, что данных не хватает. Это и есть непроверенная
+              гипотеза проекта: мы её не подтверждаем задним числом. */}
+          <StatTile
+            label="Переплата"
+            value={summary.knownOverpay > 0 ? formatTenge(summary.knownOverpay) : '—'}
+            hint={
+              summary.unknownCashPrice > 0
+                ? `у ${summary.unknownCashPrice} из ${summary.count} нет цены за наличные — там не считали`
+                : 'сверх цены за наличные'
+            }
+          />
+        </div>
+      </div>
+
       <div className="animate-rise delay-3 rounded-2xl border border-line bg-surface p-5 shadow-card">
         <CashflowChart months={months} highlightMonth={firstDeficitMonth} />
       </div>
+
+      {/* Разбивка по рассрочкам нужна только когда их несколько: при одной
+          составной график вырождается в обычный и ничего не добавляет. */}
+      {installments.length > 1 && (
+        <div className="animate-rise delay-3 rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <DebtCompositionChart
+            installments={installments}
+            monthKeys={months.map((m) => m.key)}
+            income={profile.monthlyIncome}
+          />
+        </div>
+      )}
     </section>
   );
 }
